@@ -39,29 +39,29 @@
 #define __GSMSimDTMF_H__
 
 #include <Arduino.h>
-#include "GSMSimCall.h"
+#include "GSMSim.h"
 
 
-class GSMSimDTMF : public GSMSimCall {
+class GSMSimDTMF : public GSMSim {
   protected :
 
 
   public :
 
     // Sınıfı Başlatıcı...
-    GSMSimDTMF(Stream& s) : GSMSimCall(s) {
+    GSMSimDTMF(Stream& s) : GSMSim(s) {
       RESET_PIN = DEFAULT_RST_PIN;
       LED_PIN = DEFAULT_LED_PIN;
       LED_FLAG = DEFAULT_LED_FLAG;
     }
 
-    GSMSimDTMF(Stream& s, unsigned int resetPin) : GSMSimCall(s, resetPin) {
+    GSMSimDTMF(Stream& s, unsigned int resetPin) : GSMSim(s, resetPin) {
       RESET_PIN = resetPin;
       LED_PIN = DEFAULT_LED_PIN;
       LED_FLAG = DEFAULT_LED_FLAG;
     }
 
-    GSMSimDTMF(Stream& s, unsigned int resetPin, unsigned int ledPin, bool ledFlag) : GSMSimCall(s, resetPin, ledPin, ledFlag) {
+    GSMSimDTMF(Stream& s, unsigned int resetPin, unsigned int ledPin, bool ledFlag) : GSMSim(s, resetPin, ledPin, ledFlag) {
       RESET_PIN = resetPin;
       LED_PIN = ledPin;
       LED_FLAG = ledFlag;

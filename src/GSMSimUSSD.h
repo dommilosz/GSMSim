@@ -39,29 +39,29 @@
 #define __GSMSimUSSD_H__
 
 #include <Arduino.h>
-#include "GSMSimCall.h"
+#include "GSMSim.h"
 
 
-class GSMSimUSSD : public GSMSimCall {
+class GSMSimUSSD : public GSMSim {
   protected :
 
 
   public :
 
     // Sınıfı Başlatıcı...
-    GSMSimUSSD(Stream& s) : GSMSimCall(s) {
+    GSMSimUSSD(Stream& s) : GSMSim(s) {
       RESET_PIN = DEFAULT_RST_PIN;
       LED_PIN = DEFAULT_LED_PIN;
       LED_FLAG = DEFAULT_LED_FLAG;
     }
 
-    GSMSimUSSD(Stream& s, unsigned int resetPin) : GSMSimCall(s, resetPin) {
+    GSMSimUSSD(Stream& s, unsigned int resetPin) : GSMSim(s, resetPin) {
       RESET_PIN = resetPin;
       LED_PIN = DEFAULT_LED_PIN;
       LED_FLAG = DEFAULT_LED_FLAG;
     }
 
-    GSMSimUSSD(Stream& s, unsigned int resetPin, unsigned int ledPin, bool ledFlag) : GSMSimCall(s, resetPin, ledPin, ledFlag) {
+    GSMSimUSSD(Stream& s, unsigned int resetPin, unsigned int ledPin, bool ledFlag) : GSMSim(s, resetPin, ledPin, ledFlag) {
       RESET_PIN = resetPin;
       LED_PIN = ledPin;
       LED_FLAG = ledFlag;

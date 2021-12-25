@@ -124,7 +124,7 @@ String GSMSimGPRS::getIP() {
 			return veri;
 		}
 		else {
-			"ERROR:NO_IP_FETCH";
+			return "ERROR:NO_IP_FETCH";
 		}
 	}
 }

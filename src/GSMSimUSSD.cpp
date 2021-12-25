@@ -38,7 +38,7 @@
 
 #include "Arduino.h"
 #include "GSMSimUSSD.h"
-#include "GSMSimCall.h"
+#include "GSMSim.h"
 
 //////////////////////////////////////
 //			USSD SECTION			//

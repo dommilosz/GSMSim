@@ -188,7 +188,7 @@ String GSMSimHTTP::get(String url, bool read) {
 			return "ERROR:GPRS_NOT_CONNECTED";
 		}
 	} else {
-		get(url);
+		return get(url);
 	}	
 }
 // HTTP Get Method with SSL - No return web server response
@@ -370,7 +370,7 @@ String GSMSimHTTP::getWithSSL(String url, bool read) {
 			return "ERROR:GPRS_NOT_CONNECTED";
 		}
 	} else {
-		getWithSSL(url);
+		return getWithSSL(url);
 	}
 }
 
@@ -417,7 +417,7 @@ String GSMSimHTTP::post(String url, String data, String contentType) {
 								gsm.print(F("AT+HTTPACTION=1\r"));
 								_readSerial();
 								if (_buffer.indexOf(F("OK")) != -1) {
-									_readSerial(10000);
+									_readSerial(3000);
 									if (_buffer.indexOf(F("+HTTPACTION: 1,")) != -1) {
 										String kod = _buffer.substring(_buffer.indexOf(F(","))+1, _buffer.lastIndexOf(F(",")));
 										String uzunluk = _buffer.substring(_buffer.lastIndexOf(F(","))+1);
@@ -509,7 +509,7 @@ String GSMSimHTTP::post(String url, String data, String contentType, bool read) 
 									gsm.print(F("AT+HTTPACTION=1\r"));
 									_readSerial();
 									if (_buffer.indexOf(F("OK")) != -1) {
-										_readSerial(10000);
+										_readSerial(3000);
 										if (_buffer.indexOf(F("+HTTPACTION: 1,")) != -1) {
 											String kod = _buffer.substring(_buffer.indexOf(F(","))+1, _buffer.lastIndexOf(F(",")));
 											String uzunluk = _buffer.substring(_buffer.lastIndexOf(F(","))+1);
@@ -573,7 +573,7 @@ String GSMSimHTTP::post(String url, String data, String contentType, bool read) 
 			return "ERROR:GPRS_NOT_CONNECTED";
 		}
 	} else {
-		post(url, data, contentType);
+		return post(url, data, contentType);
 	}
 }
 
@@ -623,7 +623,7 @@ String GSMSimHTTP::postWithSSL(String url, String data, String contentType) {
 									gsm.print(F("AT+HTTPACTION=1\r"));
 									_readSerial();
 									if (_buffer.indexOf(F("OK")) != -1) {
-										_readSerial(10000);
+										_readSerial(3000);
 										if (_buffer.indexOf(F("+HTTPACTION: 1,")) != -1) {
 											String kod = _buffer.substring(_buffer.indexOf(F(","))+1, _buffer.lastIndexOf(F(",")));
 											String uzunluk = _buffer.substring(_buffer.lastIndexOf(F(","))+1);
@@ -721,7 +721,7 @@ String GSMSimHTTP::postWithSSL(String url, String data, String contentType, bool
 										gsm.print(F("AT+HTTPACTION=1\r"));
 										_readSerial();
 										if (_buffer.indexOf(F("OK")) != -1) {
-											_readSerial(10000);
+											_readSerial(3000);
 											if (_buffer.indexOf(F("+HTTPACTION: 1,")) != -1) {
 												String kod = _buffer.substring(_buffer.indexOf(F(","))+1, _buffer.lastIndexOf(F(",")));
 												String uzunluk = _buffer.substring(_buffer.lastIndexOf(F(","))+1);
@@ -788,7 +788,7 @@ String GSMSimHTTP::postWithSSL(String url, String data, String contentType, bool
 			return "ERROR:GPRS_NOT_CONNECTED";
 		}
 	} else {
-		postWithSSL(url, data, contentType);
+		return postWithSSL(url, data, contentType);
 	}
 }
 

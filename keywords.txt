@@ -24,6 +24,7 @@ GSMSimUSSD				KEYWORD1
 # Methods for GSMSim and All of other GSMSim classes.
 
 init					KEYWORD2
+checkConnection         KEYWORD2
 reset					KEYWORD2
 readSerial				KEYWORD2
 sendATCommand			KEYWORD2

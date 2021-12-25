@@ -37,7 +37,7 @@
 
 #include "Arduino.h"
 #include "GSMSimDTMF.h"
-#include "GSMSimCall.h"
+#include "GSMSim.h"
 
 //////////////////////////////////////
 //			DTMF BÖLÜMÜ				//

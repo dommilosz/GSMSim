@@ -35,14 +35,14 @@
  * THE SOFTWARE.
 */
 #include "Arduino.h"
-#include "GSMSimCall.h"
+#include "GSMSim.h"
 
 
 //////////////////////////////////////
 //			CALL	SECTION			//
 //////////////////////////////////////
 // arama ile ilgili olması gereken ayarları yapar...
-bool GSMSimCall::initCall() {
+bool GSMSim::initCall() {
 	if(setCOLP(true)) {
 		if(showCurrentCall(true)) {
 			if(setCLIP(false)) {
@@ -67,7 +67,7 @@ bool GSMSimCall::initCall() {
 }
 
 // Arama Yapar
-bool GSMSimCall::call(char* phone_number) {
+bool GSMSim::call(char* phone_number) {
 
 	gsm.print(F("ATD"));
 	gsm.print(phone_number);
@@ -90,7 +90,7 @@ bool GSMSimCall::call(char* phone_number) {
 }
 
 // Gelen aramayı cevaplar
-bool GSMSimCall::answer() {
+bool GSMSim::answer() {
 	gsm.print(F("ATA\r"));
 
 	_readSerial();
@@ -105,7 +105,7 @@ bool GSMSimCall::answer() {
 }
 
 // Aramayı reddeder veya görüşmeyi sonlandırır!
-bool GSMSimCall::hangoff() {
+bool GSMSim::hangoff() {
 	gsm.print(F("ATH\r"));
 	_readSerial();
 
@@ -118,7 +118,7 @@ bool GSMSimCall::hangoff() {
 }
 
 // Arama durumunu belirtir
-int GSMSimCall::status() {
+int GSMSim::status() {
 	/*
 		values of return:
 		0 Ready (MT allows commands from TA/TE)
@@ -132,7 +132,7 @@ int GSMSimCall::status() {
 }
 
 // CLIP açık ya da kapalı
-bool GSMSimCall::setCLIP(bool active) {
+bool GSMSim::setCLIP(bool active) {
 	int durum = active == true ? 1 : 0;
 	gsm.print(F("AT+CLIP="));
 	gsm.print(durum);
@@ -150,7 +150,7 @@ bool GSMSimCall::setCLIP(bool active) {
 }
 
 // CLIR Açık ya da kapalı
-bool GSMSimCall::setCLIR(bool active) {
+bool GSMSim::setCLIR(bool active) {
 	int durum = active == true ? 1 : 0;
 	gsm.print(F("AT+CLIR="));
 	gsm.print(durum);
@@ -168,7 +168,7 @@ bool GSMSimCall::setCLIR(bool active) {
 }
 
 // Connected Line Identification aktif veya kapalı
-bool GSMSimCall::setCOLP(bool active) {
+bool GSMSim::setCOLP(bool active) {
 	int durum = active == true ? 1 : 0;
 	gsm.print(F("AT+COLP="));
 	gsm.print(durum);
@@ -186,7 +186,7 @@ bool GSMSimCall::setCOLP(bool active) {
 }
 
 // COLP Aktif mi değil mi?
-bool GSMSimCall::isCOLPActive() {
+bool GSMSim::isCOLPActive() {
 	gsm.print(F("AT+COLP?\r"));
 	_readSerial();
 
@@ -199,7 +199,7 @@ bool GSMSimCall::isCOLPActive() {
 }
 
 // Arayanı söyleme aktif mi değil mi?
-bool GSMSimCall::showCurrentCall(bool active) {
+bool GSMSim::showCurrentCall(bool active) {
 	int durum = active == true ? 1 : 0;
 	gsm.print(F("AT+CLCC="));
 	gsm.print(durum);
@@ -216,7 +216,7 @@ bool GSMSimCall::showCurrentCall(bool active) {
 	}
 }
 // şimdi arayanı söyle
-String GSMSimCall::readCurrentCall(String serialRaw) {
+String GSMSim::readCurrentCall(String serialRaw) {
 
 	String sonuc = "";
 	serialRaw.trim();
@@ -259,7 +259,7 @@ String GSMSimCall::readCurrentCall(String serialRaw) {
 }
 
 // gelen aramaları otomatik reddetmeyi açar kapatır
-bool GSMSimCall::setCallReject(bool reject) {
+bool GSMSim::setCallReject(bool reject) {
 	if(reject) {
 		gsm.print(F("AT+GSMBUSY=1\r"));
 	} else {

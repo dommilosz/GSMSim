@@ -39,12 +39,13 @@
 #include "GSMSim.h"
 #include "stdint.h"
 
-
-void GSMSim::init() {
+void GSMSim::init()
+{
 	pinMode(RESET_PIN, OUTPUT);
 	digitalWrite(RESET_PIN, HIGH);
 
-	if (LED_FLAG) {
+	if (LED_FLAG)
+	{
 		pinMode(LED_PIN, OUTPUT);
 	}
 
@@ -53,9 +54,49 @@ void GSMSim::init() {
 	echoOff();
 }
 
+GSMStatus GSMSim::getStatus()
+{
+	//+CIND:("battchg",(0-5)), ("signal",(0-5)), ("service",(0,1)), ("message",(0,1)),("call",(0,1)), ("roam",(0,1)), ("smsfull",(0,1))
+	gsm.print(F("AT+CIND?\r"));
+	_readSerial();
+	String data = _buffer;
 
-void GSMSim::reset() {
-	if (LED_FLAG) {
+	GSMStatus status;
+	status.error = true;
+
+	if (data.indexOf("+CIND:") != -1)
+	{
+		data = data.substring(data.indexOf("+CIND: ") + 7);
+		//+CIND: 5,4,1,1,1,0,0 - call
+		String d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.battchg = d.toInt();
+		d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.signal = d.toInt();
+		d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.service = d.toInt();
+		d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.message = d.toInt();
+		d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.call = d.toInt();
+		d = data.substring(0, data.indexOf(","));
+		data = data.substring(data.indexOf(",") + 1);
+		status.roam = d.toInt();
+		d = data.substring(0, 1);
+		status.smsfull = d.toInt();
+		status.error = false;
+	}
+	return status;
+}
+
+void GSMSim::reset()
+{
+	if (LED_FLAG)
+	{
 		digitalWrite(LED_PIN, HIGH);
 	}
 
@@ -67,18 +108,34 @@ void GSMSim::reset() {
 	// Modul kendine geldi mi onu bekle
 	gsm.print(F("AT\r"));
 	_readSerial();
-	while (_buffer.indexOf(F("OK")) == -1) {
+	while (_buffer.indexOf(F("OK")) == -1)
+	{
 		gsm.print(F("AT\r"));
 		_readSerial();
 	}
 
-	if (LED_FLAG) {
+	if (LED_FLAG)
+	{
 		digitalWrite(LED_PIN, LOW);
 	}
 }
 
+bool GSMSim::checkConnection(int retries)
+{
+	gsm.print(F("AT\r"));
+	_readSerial();
+	if (_buffer.indexOf(F("OK")) == -1)
+	{
+		if (retries > 0)
+			return checkConnection(retries - 1);
+		return false;
+	}
+	return true;
+}
+
 // send AT Command to module
-String GSMSim::sendATCommand(char* command) {
+String GSMSim::sendATCommand(char *command)
+{
 	gsm.print(command);
 	gsm.print("\r");
 	_readSerial(10000);
@@ -86,164 +143,203 @@ String GSMSim::sendATCommand(char* command) {
 }
 
 // SET PHONE FUNC +
-bool GSMSim::setPhoneFunc(int level = 1) {
+bool GSMSim::setPhoneFunc(int level = 1)
+{
 
-	if(level == 0 || level == 1 || level == 4) {
+	if (level == 0 || level == 1 || level == 4)
+	{
 		gsm.print(F("AT+CFUN="));
 		gsm.print(level);
 		gsm.print(F("\r"));
 
 		_readSerial();
 
-		if((_buffer.indexOf(F("OK"))) != -1)  {
+		if ((_buffer.indexOf(F("OK"))) != -1)
+		{
 			return true;
 		}
-		else {
+		else
+		{
 			return false;
 		}
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // SIGNAL QUALTY - 0-31 | 0-> poor | 31 - Full | 99 -> Unknown +
-unsigned int GSMSim::signalQuality() {
+unsigned int GSMSim::signalQuality()
+{
 	gsm.print(F("AT+CSQ\r"));
 	_readSerial(5000);
 
-	if((_buffer.indexOf(F("+CSQ:"))) != -1) {
-		return _buffer.substring(_buffer.indexOf(F("+CSQ: "))+6, _buffer.indexOf(F(","))).toInt();
-	} else {
+	if ((_buffer.indexOf(F("+CSQ:"))) != -1)
+	{
+		return _buffer.substring(_buffer.indexOf(F("+CSQ: ")) + 6, _buffer.indexOf(F(","))).toInt();
+	}
+	else
+	{
 		return 99;
 	}
 }
 
 // IS Module connected to the operator? +
-bool GSMSim::isRegistered() {
+bool GSMSim::isRegistered()
+{
 	gsm.print(F("AT+CREG?\r"));
 	_readSerial();
 
-	if( (_buffer.indexOf(F("+CREG: 0,1"))) != -1 || (_buffer.indexOf(F("+CREG: 0,5"))) != -1 || (_buffer.indexOf(F("+CREG: 1,1"))) != -1 || (_buffer.indexOf(F("+CREG: 1,5"))) != -1) {
+	if ((_buffer.indexOf(F("+CREG: 0,1"))) != -1 || (_buffer.indexOf(F("+CREG: 0,5"))) != -1 || (_buffer.indexOf(F("+CREG: 1,1"))) != -1 || (_buffer.indexOf(F("+CREG: 1,5"))) != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // IS SIM Inserted? +
-bool GSMSim::isSimInserted() {
+bool GSMSim::isSimInserted()
+{
 	gsm.print(F("AT+CSMINS?\r"));
 	_readSerial();
-	if(_buffer.indexOf(",") != -1) {
+	if (_buffer.indexOf(",") != -1)
+	{
 		// bölelim
-		String veri = _buffer.substring(_buffer.indexOf(F(","))+1, _buffer.indexOf(F("OK")));
+		String veri = _buffer.substring(_buffer.indexOf(F(",")) + 1, _buffer.indexOf(F("OK")));
 		veri.trim();
 		//return veri;
-		if(veri == "1") {
+		if (veri == "1")
+		{
 			return true;
-		} else {
+		}
+		else
+		{
 			return false;
 		}
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // Pin statüsü - AT+CPIN? +
-unsigned int GSMSim::pinStatus() {
+unsigned int GSMSim::pinStatus()
+{
 	gsm.print(F("AT+CPIN?\r"));
 	_readSerial();
 
-	if(_buffer.indexOf(F("READY")) != -1)
+	if (_buffer.indexOf(F("READY")) != -1)
 	{
 		return 0;
 	}
-	else if(_buffer.indexOf(F("SIM PIN")) != -1)
+	else if (_buffer.indexOf(F("SIM PIN")) != -1)
 	{
 		return 1;
 	}
-	else if(_buffer.indexOf(F("SIM PUK")) != -1)
+	else if (_buffer.indexOf(F("SIM PUK")) != -1)
 	{
 		return 2;
 	}
-	else if(_buffer.indexOf(F("PH_SIM PIN")) != -1)
+	else if (_buffer.indexOf(F("PH_SIM PIN")) != -1)
 	{
 		return 3;
 	}
-	else if(_buffer.indexOf(F("PH_SIM PUK")) != -1)
+	else if (_buffer.indexOf(F("PH_SIM PUK")) != -1)
 	{
 		return 4;
 	}
-	else if(_buffer.indexOf(F("SIM PIN2")) != -1)
+	else if (_buffer.indexOf(F("SIM PIN2")) != -1)
 	{
 		return 5;
 	}
-	else if(_buffer.indexOf(F("SIM PUK2")) != -1)
+	else if (_buffer.indexOf(F("SIM PUK2")) != -1)
 	{
 		return 6;
 	}
-	else {
+	else
+	{
 		return 7;
 	}
 }
 
 // Unlock the pin code +
-bool GSMSim::enterPinCode(char* pinCode) {
+bool GSMSim::enterPinCode(char *pinCode)
+{
 	gsm.print(F("AT+CPIN=\""));
 	gsm.print(pinCode);
 	gsm.print(F("\"\r"));
 	_readSerial(6000);
 
-	if(_buffer.indexOf(F("ERROR")) != -1) {
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
 		return false;
-	} else {
+	}
+	else
+	{
 		return true;
 	}
 }
 
 // enable pin code... +
-bool GSMSim::enablePinCode(char* pinCode) {
+bool GSMSim::enablePinCode(char *pinCode)
+{
 	gsm.print(F("AT+CLCK=\"SC\",1,\""));
 	gsm.print(pinCode);
 	gsm.print(F("\"\r"));
 	_readSerial(6000);
-	if(_buffer.indexOf(F("ERROR")) != -1) {
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
 		return false;
-	} else {
+	}
+	else
+	{
 		reset();
 		return true;
 	}
 }
 
 // disable pin code +
-bool GSMSim::disablePinCode(char* pinCode) {
+bool GSMSim::disablePinCode(char *pinCode)
+{
 	gsm.print(F("AT+CLCK=\"SC\",0,\""));
 	gsm.print(pinCode);
 	gsm.print(F("\"\r"));
 	_readSerial(6000);
-	if(_buffer.indexOf(F("ERROR")) != -1) {
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
 		return false;
-	} else {
+	}
+	else
+	{
 		reset();
 		return true;
 	}
 }
 
 // OPERATOR NAME +
-String GSMSim::operatorName() {
+String GSMSim::operatorName()
+{
 	gsm.print(F("AT+COPS?\r"));
 	_readSerial();
 
-	if(_buffer.indexOf(F(",")) == -1) {
+	if (_buffer.indexOf(F(",")) == -1)
+	{
 		return "NOT CONNECTED";
 	}
-	else {
-		 return _buffer.substring(_buffer.indexOf(F(",\""))+2, _buffer.lastIndexOf(F("\"")));
+	else
+	{
+		return _buffer.substring(_buffer.indexOf(F(",\"")) + 2, _buffer.lastIndexOf(F("\"")));
 	}
 }
 
 // OPERATOR NAME FROM SIM +
-String GSMSim::operatorNameFromSim() {
+String GSMSim::operatorNameFromSim()
+{
 	gsm.flush();
 	gsm.print(F("AT+CSPN?\r"));
 	_readSerial();
@@ -252,54 +348,65 @@ String GSMSim::operatorNameFromSim() {
 	/*
 	return _buffer;
 	*/
-	if(_buffer.indexOf(F("OK")) != -1) {
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
 		return _buffer.substring(_buffer.indexOf(F(" \"")) + 2, _buffer.lastIndexOf(F("\"")));
 	}
-	else {
+	else
+	{
 		return "NOT CONNECTED";
 	}
 }
 
 // PHONE STATUS +
-unsigned int GSMSim::phoneStatus() {
+unsigned int GSMSim::phoneStatus()
+{
 	gsm.print(F("AT+CPAS\r"));
 	_readSerial();
 
-	if((_buffer.indexOf("+CPAS: ")) != -1)
+	if ((_buffer.indexOf("+CPAS: ")) != -1)
 	{
-		return _buffer.substring(_buffer.indexOf(F("+CPAS: "))+7,_buffer.indexOf(F("+CPAS: "))+9).toInt();
+		return _buffer.substring(_buffer.indexOf(F("+CPAS: ")) + 7, _buffer.indexOf(F("+CPAS: ")) + 9).toInt();
 	}
-	else {
+	else
+	{
 		return 99; // not read from module
 	}
 }
 
 // ECHO OFF +
-bool GSMSim::echoOff() {
+bool GSMSim::echoOff()
+{
 	gsm.print(F("ATE0\r"));
 	_readSerial();
-	if ( (_buffer.indexOf(F("OK")) )!=-1 ) {
-   		return true;
-   }
-   else {
-   	return false;
-   }
+	if ((_buffer.indexOf(F("OK"))) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 // ECHO ON +
-bool GSMSim::echoOn() {
+bool GSMSim::echoOn()
+{
 	gsm.print(F("ATE1\r"));
 	_readSerial();
-	if ( (_buffer.indexOf(F("OK")) )!=-1 ) {
-   		return true;
-   }
-   else {
-   	return false;
-   }
+	if ((_buffer.indexOf(F("OK"))) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 // Modül Üreticisi +
-String GSMSim::moduleManufacturer() {
+String GSMSim::moduleManufacturer()
+{
 	gsm.print(F("AT+CGMI\r"));
 	_readSerial();
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
@@ -309,7 +416,8 @@ String GSMSim::moduleManufacturer() {
 }
 
 // Modül Modeli +
-String GSMSim::moduleModel() {
+String GSMSim::moduleModel()
+{
 	gsm.print(F("AT+CGMM\r"));
 	_readSerial();
 
@@ -319,18 +427,20 @@ String GSMSim::moduleModel() {
 	return veri;
 }
 
-// Modül Revizyonu + 
-String GSMSim::moduleRevision() {
+// Modül Revizyonu +
+String GSMSim::moduleRevision()
+{
 	gsm.print(F("AT+CGMR\r"));
 	_readSerial();
 
-	String veri = _buffer.substring(_buffer.indexOf(F(":"))+1 , _buffer.indexOf(F("OK")));
+	String veri = _buffer.substring(_buffer.indexOf(F(":")) + 1, _buffer.indexOf(F("OK")));
 	veri.trim();
 	return veri;
 }
 
 // Modülün IMEI numarası +
-String GSMSim::moduleIMEI() {
+String GSMSim::moduleIMEI()
+{
 	gsm.print(F("AT+CGSN\r"));
 	_readSerial();
 
@@ -340,16 +450,18 @@ String GSMSim::moduleIMEI() {
 }
 
 // Modülün IMEI Numarasını değiştirir. +
-bool GSMSim::moduleIMEIChange(char* imeino) {
+bool GSMSim::moduleIMEIChange(char *imeino)
+{
 	gsm.print(F("AT+SIMEI="));
 	gsm.print(imeino);
 	gsm.print("\r");
 
 	_readSerial();
 
-	if ( (_buffer.indexOf(F("OK")) )!=-1 ) {
-   		return true;
-   	}
+	if ((_buffer.indexOf(F("OK"))) != -1)
+	{
+		return true;
+	}
 	else
 	{
 		return false;
@@ -357,7 +469,8 @@ bool GSMSim::moduleIMEIChange(char* imeino) {
 }
 
 // Modülün SIM Numarası +
-String GSMSim::moduleIMSI() {
+String GSMSim::moduleIMSI()
+{
 	gsm.print(F("AT+CIMI\r"));
 	_readSerial();
 
@@ -367,7 +480,8 @@ String GSMSim::moduleIMSI() {
 }
 
 // Sim Kart Seri Numarası +
-String GSMSim::moduleICCID() {
+String GSMSim::moduleICCID()
+{
 	gsm.print(F("AT+CCID\r"));
 	_readSerial();
 
@@ -378,7 +492,8 @@ String GSMSim::moduleICCID() {
 }
 
 // Çalma Sesi +
-unsigned int GSMSim::ringerVolume() {
+unsigned int GSMSim::ringerVolume()
+{
 	gsm.print(F("AT+CRSL?\r"));
 	_readSerial();
 
@@ -389,8 +504,10 @@ unsigned int GSMSim::ringerVolume() {
 }
 
 // Çalma sesini ayarla +
-bool GSMSim::setRingerVolume(unsigned int level) {
-	if(level > 100) {
+bool GSMSim::setRingerVolume(unsigned int level)
+{
+	if (level > 100)
+	{
 		level = 100;
 	}
 
@@ -399,15 +516,19 @@ bool GSMSim::setRingerVolume(unsigned int level) {
 	gsm.print(F("\r"));
 	_readSerial();
 
-	if(_buffer.indexOf(F("OK")) != -1) {
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // Hoparlör sesi +
-unsigned int GSMSim::speakerVolume() {
+unsigned int GSMSim::speakerVolume()
+{
 	gsm.print(F("AT+CLVL?\r"));
 	_readSerial();
 
@@ -418,8 +539,10 @@ unsigned int GSMSim::speakerVolume() {
 }
 
 // Hoparlör sesini ayarla +
-bool GSMSim::setSpeakerVolume(unsigned int level) {
-	if(level > 100) {
+bool GSMSim::setSpeakerVolume(unsigned int level)
+{
+	if (level > 100)
+	{
 		level = 100;
 	}
 
@@ -429,58 +552,74 @@ bool GSMSim::setSpeakerVolume(unsigned int level) {
 
 	_readSerial();
 
-	if (_buffer.indexOf(F("OK")) != -1) {
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Modül Debug
-String GSMSim::moduleDebug() {
+String GSMSim::moduleDebug()
+{
 	gsm.print(F("AT&V\r"));
 	_readSerial(60000);
 
 	return _buffer;
 }
 // Bazı fonksiyonların modül üzerine kaydedilmesini sağlar...
-bool GSMSim::saveSettingsToModule() {
+bool GSMSim::saveSettingsToModule()
+{
 	gsm.print(F("AT&W\r"));
 	_readSerial();
 
-	if (_buffer.indexOf(F("OK")) != -1) {
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-
-
-
-
 
 //////////////////////////////////////
 //			PRIVATE METHODS			//
 //////////////////////////////////////
 
 // READ FROM SERIAL
-void GSMSim::_readSerial() {
+void GSMSim::_readSerial()
+{
 
 	_buffer = "";
 	uint64_t timeOld = millis();
 	// Bir süre bekle...
-	while (!gsm.available() && !(millis() > timeOld + TIME_OUT_READ_SERIAL)) { ; }
+	while (!gsm.available() && !(millis() > timeOld + TIME_OUT_READ_SERIAL))
+	{
+		;
+	}
 	// beklemeden çıkınca ya da süre dolunca varsa seriali oku, yoksa çık git...
-	if(gsm.available()) { _buffer = gsm.readString(); }
+	if (gsm.available())
+	{
+		_buffer = gsm.readString();
+	}
 }
 
-void GSMSim::_readSerial(uint32_t timeout) {
+void GSMSim::_readSerial(uint32_t timeout)
+{
 	_buffer = "";
 	uint64_t timeOld = millis();
 	// Bir süre bekle...
-	while (!gsm.available() && !(millis() > timeOld + timeout)) { ; }
+	while (!gsm.available() && !(millis() > timeOld + timeout))
+	{
+		;
+	}
 	// beklemeden çıkınca ya da süre dolunca varsa seriali oku, yoksa çık git...
-	if(gsm.available()) { _buffer = gsm.readString(); }
+	if (gsm.available())
+	{
+		_buffer = gsm.readString();
+	}
 }

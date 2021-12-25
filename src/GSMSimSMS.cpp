@@ -36,51 +36,70 @@
 */
 
 #include "Arduino.h"
-#include "GSMSimSMS.h"
-
+#include "GSMSim.h"
 
 //////////////////////////////////////
 //			MESAJ BÖLÜMÜ			//
 //////////////////////////////////////
 
-bool GSMSimSMS::initSMS() {
-	if(setTextMode(true)) {
-		if(setPreferredSMSStorage("ME", "ME", "ME")) {
-			if(setNewMessageIndication()) {
-				if(setCharset("IRA")) {
+bool GSMSim::initSMS()
+{
+	if (setTextMode(true))
+	{
+		if (setPreferredSMSStorage((char *)"ME", (char *)"ME", (char *)"ME"))
+		{
+			if (setNewMessageIndication())
+			{
+				if (setCharset((char *)"IRA"))
+				{
 					return true;
-				} else {
+				}
+				else
+				{
 					return false;
 				}
-			} else {
+			}
+			else
+			{
 				return false;
 			}
-		} else {
+		}
+		else
+		{
 			return false;
 		}
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // SMS i TEXT ya da PDU moduna alır. +
-bool GSMSimSMS::setTextMode(bool textModeON) {
-	if (textModeON == true) {
+bool GSMSim::setTextMode(bool textModeON)
+{
+	if (textModeON == true)
+	{
 		gsm.print(F("AT+CMGF=1\r"));
 	}
-	else {
+	else
+	{
 		gsm.print(F("AT+CMGF=0\r"));
 	}
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 // tercih edilen sms kayıt yeri +
-bool GSMSimSMS::setPreferredSMSStorage(char* mem1, char* mem2, char* mem3) {
+bool GSMSim::setPreferredSMSStorage(char *mem1, char *mem2, char *mem3)
+{
 	gsm.print(F("AT+CPMS=\""));
 	gsm.print(mem1);
 	gsm.print(F("\",\""));
@@ -91,43 +110,55 @@ bool GSMSimSMS::setPreferredSMSStorage(char* mem1, char* mem2, char* mem3) {
 
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 // yeni mesajı <mem>,<smsid> şeklinde geri dönmesi için ayarlar... +
-bool GSMSimSMS::setNewMessageIndication() {
+bool GSMSim::setNewMessageIndication()
+{
 	gsm.print(F("AT+CNMI=2,1\r"));
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // charseti ayarlar
-bool GSMSimSMS::setCharset(char* charset) {
+bool GSMSim::setCharset(char *charset)
+{
 	gsm.print(F("AT+CSCS=\""));
 	gsm.print(charset);
 	gsm.print(F("\"\r"));
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // verilen numara ve mesajı gönderir! +
-bool GSMSimSMS::send(char* number, char* message) {
+bool GSMSim::send(char *number, char *message)
+{
 
 	String str = "";
-	gsm.print(F("AT+CMGS=\""));  // command to send sms
+	gsm.print(F("AT+CMGS=\"")); // command to send sms
 	gsm.print(number);
 	gsm.print(F("\"\r"));
 	_readSerial();
@@ -144,101 +175,169 @@ bool GSMSimSMS::send(char* number, char* message) {
 	_readSerial();
 	str += _buffer;
 	//expect CMGS:xxx   , where xxx is a number,for the sending sms.
-	
+
 	return str;
 	/**/
-	if (str.indexOf("+CMGS:") != -1) {
+	if (str.indexOf("+CMGS:") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Belirtilen klasördeki smslerin indexlerini listeler! +
-String GSMSimSMS::list(bool onlyUnread) {
-
-	if(onlyUnread) {
+int GSMSim::list(void (*cb)(SMSStruct sms),bool onlyUnread)
+{
+	if (onlyUnread)
+	{
 		gsm.print(F("AT+CMGL=\"REC UNREAD\",1\r"));
-	} else {
+	}
+	else
+	{
 		// hepsi
 		gsm.print(F("AT+CMGL=\"ALL\",1\r"));
 	}
 
 	_readSerial(30000);
+	
+	int count;
 
 	//return _buffer;
 
-	String returnData = "";
+	String returndata = "";
 
-	if(_buffer.indexOf("ERROR") != -1) {
-		returnData = "ERROR";
-	} else {
+	if (_buffer.indexOf("ERROR") != -1)
+	{
+		return count;
+	}
+	else
+	{
 		// +CMGL: varsa döngüye girelim. yoksa sadece OK dönmüştür. O zaman NO_SMS diyelim
-		if(_buffer.indexOf("+CMGL:") != -1) {
+		if (_buffer.indexOf("+CMGL:") != -1)
+		{
 			String data = _buffer;
 			bool quitLoop = false;
-			returnData = "";
 
-			while(!quitLoop) {
-				if(data.indexOf("+CMGL:") == -1) {
+			while (!quitLoop)
+			{
+				if (data.indexOf("+CMGL:") == -1)
+				{
 					quitLoop = true;
 					continue;
 				}
 
 				data = data.substring(data.indexOf("+CMGL: ") + 7);
-				String metin = data.substring(0, data.indexOf(","));
-				metin.trim();
+				String index = data.substring(0, data.indexOf(","));
+				data = data.substring(data.indexOf("\"") + 1);
+				String state = data.substring(0, data.indexOf("\""));
+				data = data.substring(data.indexOf(",") + 2);
+				String number = data.substring(0, data.indexOf("\""));
+				data = data.substring(data.indexOf(",") + 1);
+				data = data.substring(data.indexOf(",") + 2);
+				String date = data.substring(0, data.indexOf("\""));
+				data = data.substring(data.indexOf("\""));
+				data = data.substring(data.indexOf("\r") + 1);
 
-				if(returnData == "") {
-					returnData += "SMSIndexNo:";
-					returnData += metin;
-				} else {
-					returnData += ",";
-					returnData += metin;
+				String _data = data.substring(0, data.indexOf("\r"));
+				index.trim();
+
+				String klasor = "UNKNOWN";
+				String okundumu = "UNKNOWN";
+
+				if (state.indexOf("REC UNREAD") != -1)
+				{
+					klasor = "INCOMING";
+					okundumu = "UNREAD";
 				}
-
+				if (state.indexOf("REC READ") != -1)
+				{
+					klasor = "INCOMING";
+					okundumu = "READ";
+				}
+				if (state.indexOf("STO UNSENT") != -1)
+				{
+					klasor = "OUTGOING";
+					okundumu = "UNSENT";
+				}
+				if (state.indexOf("STO SENT") != -1)
+				{
+					klasor = "OUTGOING";
+					okundumu = "SENT";
+				}
+				
+				SMSStruct sms;
+				sms.id = index.toInt();
+				sms.folder = klasor;
+				sms.status = okundumu;
+				sms.phoneno = number;
+				sms.date = date;
+				sms.error = false;
+				sms.message = _data;
+				
+				cb(sms);
+				count++;
 			}
-		} else {
-			returnData = "NO_SMS";
+		}
+		else
+		{
+			return count;
 		}
 	}
 
-	return returnData;
+	return count;
 }
 
 // Indexi verilen mesajı okur. Anlaşılır hale getirir! +
-String GSMSimSMS::read(unsigned int index) {
+SMSStruct GSMSim::read(unsigned int index, bool markRead)
+{
 	gsm.print("AT+CMGR=");
 	gsm.print(index);
-	gsm.print(",0\r");
+	gsm.print(",");
+	if (markRead == true)
+	{
+		gsm.print("0");
+	}
+	else
+	{
+		gsm.print("1");
+	}
+	gsm.print("\r");
 
 	_readSerial(30000);
 
 	//return _buffer;
 
-	String durum = "INDEX_NO_ERROR";
+	SMSStruct sms;
+	sms.error = true;
 
-	if (_buffer.indexOf("+CMGR:") != -1) {
+	if (_buffer.indexOf("+CMGR:") != -1)
+	{
 
 		String klasor, okundumu, telno, zaman, mesaj;
 
 		klasor = "UNKNOWN";
 		okundumu = "UNKNOWN";
 
-		if (_buffer.indexOf("REC UNREAD") != -1) {
+		if (_buffer.indexOf("REC UNREAD") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "UNREAD";
 		}
-		if (_buffer.indexOf("REC READ") != -1) {
+		if (_buffer.indexOf("REC READ") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "READ";
 		}
-		if (_buffer.indexOf("STO UNSENT") != -1) {
+		if (_buffer.indexOf("STO UNSENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "UNSENT";
 		}
-		if (_buffer.indexOf("STO SENT") != -1) {
+		if (_buffer.indexOf("STO SENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "SENT";
 		}
@@ -256,151 +355,90 @@ String GSMSimSMS::read(unsigned int index) {
 
 		// Little Fix for incoming messaged from iPhone
 		String messageHex = "";
-		for(int i = 0; i < mesaj.length(); i++) {
+		for (int i = 0; i < mesaj.length(); i++)
+		{
 			messageHex += String(mesaj[i], HEX);
 		}
 
-		if(messageHex.indexOf("ffa5ffa4ffa3ffa3") != -1) {
+		if (messageHex.indexOf("ffa5ffa4ffa3ffa3") != -1)
+		{
 			mesaj = mesaj.substring(4);
 		}
 
-		durum = "FOLDER:";
-		durum += klasor;
-		durum += "|STATUS:";
-		durum += okundumu;
-		durum += "|PHONENO:";
-		durum += telno;
-		durum += "|DATETIME:";
-		durum += zaman;
-		durum += "|MESSAGE:";
-		durum += mesaj;
+		sms.error = false;
+		sms.id = index;
+		sms.folder = klasor;
+		sms.status = okundumu;
+		sms.phoneno = telno;
+		sms.date = zaman;
+		sms.message = mesaj;
 	}
 
-	return durum;
+	return sms;
 }
+
 // Indexi verilen mesajı okur. Anlaşılır hale getirir! +
-String GSMSimSMS::read(unsigned int index, bool markRead) {
-	gsm.print("AT+CMGR=");
-	gsm.print(index);
-	gsm.print(",");
-	if (markRead == true) {
-		gsm.print("0");
-	}
-	else {
-		gsm.print("1");
-	}
-	gsm.print("\r");
-
-	_readSerial(30000);
-
-	//return _buffer;
-
-	String durum = "INDEX_NO_ERROR";
-
-	if (_buffer.indexOf("+CMGR:") != -1) {
-
-		String klasor, okundumu, telno, zaman, mesaj;
-
-		klasor = "UNKNOWN";
-		okundumu = "UNKNOWN";
-
-		if (_buffer.indexOf("REC UNREAD") != -1) {
-			klasor = "INCOMING";
-			okundumu = "UNREAD";
-		}
-		if (_buffer.indexOf("REC READ") != -1) {
-			klasor = "INCOMING";
-			okundumu = "READ";
-		}
-		if (_buffer.indexOf("STO UNSENT") != -1) {
-			klasor = "OUTGOING";
-			okundumu = "UNSENT";
-		}
-		if (_buffer.indexOf("STO SENT") != -1) {
-			klasor = "OUTGOING";
-			okundumu = "SENT";
-		}
-
-		String telno_bol1 = _buffer.substring(_buffer.indexOf("\",\"") + 3);
-		telno = telno_bol1.substring(0, telno_bol1.indexOf("\",\"")); // telefon numarası tamam
-
-		String tarih_bol = telno_bol1.substring(telno_bol1.lastIndexOf("\",\"") + 3);
-
-		zaman = tarih_bol.substring(0, tarih_bol.indexOf("\"")); // zamanı da aldık. Bir tek mesaj kaldı!
-
-		mesaj = tarih_bol.substring(tarih_bol.indexOf("\"")+1, tarih_bol.lastIndexOf("OK"));
-
-		mesaj.trim();
-
-		
-		// Little Fix for incoming messaged from iPhone
-		String messageHex = "";
-		for(int i = 0; i < mesaj.length(); i++) {
-			messageHex += String(mesaj[i], HEX);
-		}
-
-		if(messageHex.indexOf("ffa5ffa4ffa3ffa3") != -1) {
-			mesaj = mesaj.substring(4);
-		}
-
-		durum = "FOLDER:";
-		durum += klasor;
-		durum += "|STATUS:";
-		durum += okundumu;
-		durum += "|PHONENO:";
-		durum += telno;
-		durum += "|DATETIME:";
-		durum += zaman;
-		durum += "|MESSAGE:";
-		durum += mesaj;
-	}
-
-	return durum;
+SMSStruct GSMSim::read(unsigned int index)
+{
+	return read(index, true);
 }
 
 // Verilen indexten mesajı gönderen kişiyi bulur. +
-String GSMSimSMS::getSenderNo(unsigned int index) {
-	String message = read(index, false);
+String GSMSim::getSenderNo(unsigned int index)
+{
+	SMSStruct sms = read(index, false);
 
-	if(message.indexOf(F("PHONENO:")) == -1) {
+	if (sms.error)
+	{
 		return "NO MESSAGE";
-	} else {
-		String no = message.substring(message.indexOf("PHONENO:")+8, message.indexOf("|DATETIME:"));
+	}
+	else
+	{
+		String no = sms.phoneno;
 		no.trim();
 		return no;
 	}
 }
 
 // Serialden Mesajı okur +
-String GSMSimSMS::readFromSerial(String serialRaw) {
-	if (serialRaw.indexOf("+CMTI:") != -1) {
+SMSStruct GSMSim::readFromSerial(String serialRaw)
+{
+	if (serialRaw.indexOf("+CMTI:") != -1)
+	{
 		String numara = serialRaw.substring(serialRaw.indexOf("\",") + 2);
 		numara.trim();
 		int no = numara.toInt();
 
 		return read(no, true);
 	}
-	else {
-		return "RAW_DATA_NOT_READ";
+	else
+	{
+		SMSStruct sms;
+		sms.error = true;
+		return sms;
 	}
 }
 
 // serialden mesajın indexini alır +
-unsigned int GSMSimSMS::indexFromSerial(String serialRaw) {
-	if (serialRaw.indexOf("+CMTI:") != -1) {
+unsigned int GSMSim::indexFromSerial(String serialRaw)
+{
+	if (serialRaw.indexOf("+CMTI:") != -1)
+	{
 		String numara = serialRaw.substring(serialRaw.indexOf("\",") + 2);
 		numara.trim();
 		int no = numara.toInt();
 
 		return no;
 	}
-	else {
+	else
+	{
 		return -1;
 	}
 }
 
 // mesaj merkez numasını getirir +
-String GSMSimSMS::readMessageCenter() {
+String GSMSim::readMessageCenter()
+{
 	gsm.print("AT+CSCA?\r");
 	_readSerial();
 
@@ -408,68 +446,80 @@ String GSMSimSMS::readMessageCenter() {
 
 	if (_buffer.indexOf("+CSCA:") != -1)
 	{
-		sonuc = _buffer.substring(_buffer.indexOf("+CSCA:")+8, _buffer.indexOf("\","));
+		sonuc = _buffer.substring(_buffer.indexOf("+CSCA:") + 8, _buffer.indexOf("\","));
 	}
 
 	return sonuc;
 }
 
 // mesaj merkez numarasını değiştirir +
-bool GSMSimSMS::changeMessageCenter(char* messageCenter) {
+bool GSMSim::changeMessageCenter(char *messageCenter)
+{
 	gsm.print("AT+CSCA=\"");
 	gsm.print(messageCenter);
 	gsm.print("\"\r");
 
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // tek bir mesajı siler +
-bool GSMSimSMS::deleteOne(unsigned int index) {
+bool GSMSim::deleteOne(unsigned int index)
+{
 	gsm.print(F("AT+CMGD="));
 	gsm.print(index);
 	gsm.print(F(",0\r"));
 
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Tüm okunmuş mesajlaarı siler. Fakat gidene dokunmaz +
-bool GSMSimSMS::deleteAllRead() {
+bool GSMSim::deleteAllRead()
+{
 	gsm.print(F("AT+CMGD=1,1\r"));
 
 	_readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // okunmuş okunmamış ne varsa siler +
-bool GSMSimSMS::deleteAll() {
+bool GSMSim::deleteAll()
+{
 	gsm.print(F("AT+CMGD=1,4\r"));
 
 	_readSerial(30000);
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
