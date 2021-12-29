@@ -222,6 +222,7 @@ public:
   bool initCall();
   // arama yapar
   bool call(char *phone_number);
+  bool call(String *phone_number);
   // arama cevaplar
   bool answer();
   // aramayı sonlandırır

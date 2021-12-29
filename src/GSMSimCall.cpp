@@ -89,6 +89,28 @@ bool GSMSim::call(char* phone_number) {
 	
 }
 
+bool GSMSim::call(String *phone_number) {
+
+	gsm.print(F("ATD"));
+	gsm.print(&phone_number);
+	gsm.print(";\r");
+
+	_readSerial();
+	
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
+		return true;
+	}
+	else {
+		if(_buffer.indexOf(F("+CLCC:")) != -1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+}
+
 // Gelen aramayı cevaplar
 bool GSMSim::answer() {
 	gsm.print(F("ATA\r"));
