@@ -285,6 +285,43 @@ bool GSMSim::enterPinCode(char *pinCode)
 	}
 }
 
+bool GSMSim::enterPukCode(char *pukCode,char *pinCode)
+{
+	gsm.print(F("AT+CPIN=\""));
+	gsm.print(pukCode);
+	gsm.print("\",\"");
+	gsm.print(pinCode);
+	gsm.print(F("\"\r"));
+	_readSerial(6000);
+
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool GSMSim::changePinCode(char *oldCode, char *newCode){
+gsm.print(F("AT+CPWD=\"SC\",\""));
+	gsm.print(oldCode);
+	gsm.print("\",\"");
+	gsm.print(newCode);
+	gsm.print(F("\"\r"));
+	_readSerial(6000);
+
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 // enable pin code... +
 bool GSMSim::enablePinCode(char *pinCode)
 {
@@ -319,6 +356,24 @@ bool GSMSim::disablePinCode(char *pinCode)
 		reset();
 		return true;
 	}
+}
+
+int GSMSim::getPinStatus()
+{
+	gsm.print(F("AT+CLCK=\"SC\",2\r"));
+	_readSerial(6000);
+	if (_buffer.indexOf(F("+CLCK:")) != -1)
+	{
+		_buffer = _buffer.substring(_buffer.indexOf("+CLCK: ")+7);
+		String status = _buffer.substring(0,1);
+		if(status == "0")return 0;
+		if(status == "1")return 1;
+	}
+	else
+	{
+		return -1;
+	}
+	return -1;
 }
 
 // OPERATOR NAME +

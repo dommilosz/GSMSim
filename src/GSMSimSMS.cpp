@@ -119,6 +119,29 @@ bool GSMSim::setPreferredSMSStorage(char *mem1, char *mem2, char *mem3)
 		return false;
 	}
 }
+
+bool GSMSim::getPreferredSMSStorage(int *arr)
+{
+	gsm.print(F("AT+CPMS?\r"));
+	_readSerial();
+
+	if (_buffer.indexOf("+CPMS:") != -1)
+	{
+		  _buffer = _buffer.substring(_buffer.indexOf("+CPMS: ")+7);
+  _buffer = _buffer.substring(_buffer.indexOf(",")+1);
+  String usageR = _buffer.substring(0,_buffer.indexOf(","));
+  _buffer = _buffer.substring(_buffer.indexOf(",")+1);
+  String usageRM = _buffer.substring(0,_buffer.indexOf(","));
+  arr[0] = usageR.toInt();
+  arr[1] = usageRM.toInt();
+  return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 // yeni mesajı <mem>,<smsid> şeklinde geri dönmesi için ayarlar... +
 bool GSMSim::setNewMessageIndication()
 {

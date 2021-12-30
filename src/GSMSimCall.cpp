@@ -91,24 +91,10 @@ bool GSMSim::call(char* phone_number) {
 
 bool GSMSim::call(String *phone_number) {
 
-	gsm.print(F("ATD"));
-	gsm.print(&phone_number);
-	gsm.print(";\r");
-
-	_readSerial();
-	
-	if (_buffer.indexOf(F("OK")) != -1)
-	{
-		return true;
-	}
-	else {
-		if(_buffer.indexOf(F("+CLCC:")) != -1) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
+	char c[phone_number->length()+1];
+	c[phone_number->length()] = 0;
+	phone_number->toCharArray(c,phone_number->length());
+	return call(c);
 }
 
 // Gelen aramayı cevaplar

@@ -142,10 +142,13 @@ public:
   unsigned int pinStatus();
   // enter pin code
   bool enterPinCode(char *pinCode);
+  bool enterPukCode(char *pukCode,char *pinCode);
+  bool changePinCode(char *oldCode,char *newCode);
   // enable pin code
   bool enablePinCode(char *pinCode);
   // disable pin code
   bool disablePinCode(char *pinCode);
+  int getPinStatus();
   // operatör ismi
   String operatorName();
   // Sim kartta kayıtlı operatör ismi
@@ -189,6 +192,7 @@ public:
   bool setTextMode(bool textModeON);
   // sms için kayıt kaynağı seçer
   bool setPreferredSMSStorage(char *mem1, char *mem2, char *mem3);
+  bool getPreferredSMSStorage(int *arr);
   // yeni mesajı <mem>,<smsid> şeklinde geri dönmesi için ayarlar...
   bool setNewMessageIndication();
   // charseti ayarlar...
