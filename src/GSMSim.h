@@ -84,6 +84,12 @@ struct GSMStatus
   bool error;
 };
 
+struct PhoneBookEntry{
+	byte id,type;
+	String phoneno,name;
+	bool error;
+};
+
 class GSMSim
 {
 protected:
@@ -245,6 +251,9 @@ public:
   String readCurrentCall(String serialRaw);
   // enable or disable reject all calls
   bool setCallReject(bool rejectAll);
+  
+  int getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to);
+  bool deletePhoneBookEntry(int id);
 };
 
 #endif

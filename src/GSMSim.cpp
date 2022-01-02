@@ -366,14 +366,12 @@ int GSMSim::getPinStatus()
 	{
 		_buffer = _buffer.substring(_buffer.indexOf("+CLCK: ")+7);
 		String status = _buffer.substring(0,1);
-		if(status == "0")return 0;
-		if(status == "1")return 1;
+		return status.toInt();
 	}
 	else
 	{
 		return -1;
 	}
-	return -1;
 }
 
 // OPERATOR NAME +
@@ -427,6 +425,80 @@ unsigned int GSMSim::phoneStatus()
 	{
 		return 99; // not read from module
 	}
+}
+
+int GSMSim::getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to){
+	gsm.print(F("AT+CPBR="));
+	gsm.print(from);
+	gsm.print(",");
+	gsm.print(to);
+	gsm.print("\r");
+	_readSerial();
+	
+	int count;
+
+	if (_buffer.indexOf("ERROR") != -1)
+	{
+		return count;
+	}
+	else
+	{
+		// +CMGL: varsa döngüye girelim. yoksa sadece OK dönmüştür. O zaman NO_SMS diyelim
+		if (_buffer.indexOf("+CPBR:") != -1)
+		{
+			String data = _buffer;
+			bool quitLoop = false;
+
+			while (!quitLoop)
+			{
+				if (data.indexOf("+CPBR:") == -1)
+				{
+					quitLoop = true;
+					continue;
+				}
+				PhoneBookEntry pe;
+				
+				data = data.substring(data.indexOf("+CPBR: ") + 7);
+
+  pe.id = data.substring(0, data.indexOf(",")).toInt();
+  data = data.substring(data.indexOf("\"") + 1);
+  pe.phoneno = data.substring(0, data.indexOf("\""));
+  data = data.substring(data.indexOf(",")+1);
+  pe.type = data.substring(0, data.indexOf(",")).toInt();
+  data = data.substring(data.indexOf(",") + 2);
+  pe.name = data.substring(0, data.indexOf("\""));
+  pe.error = 0;
+				
+				cb(pe);
+				count++;
+			}
+		}
+		else
+		{
+			return count;
+		}
+	}
+
+	return count;
+
+}
+
+bool GSMSim::deletePhoneBookEntry(int id){
+	//AT+CPBW=${id}
+	gsm.print(F("AT+CPBW="));
+	gsm.print(id);
+	gsm.print("\r");
+	_readSerial();
+	
+	if (_buffer.indexOf(F("ERROR")) != -1)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+	
 }
 
 // ECHO OFF +
