@@ -93,7 +93,7 @@ bool GSMSim::call(String *phone_number) {
 
 	char c[phone_number->length()+1];
 	c[phone_number->length()] = 0;
-	phone_number->toCharArray(c,phone_number->length());
+	phone_number->toCharArray(c,phone_number->length()+1);
 	return call(c);
 }
 
