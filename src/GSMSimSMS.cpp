@@ -187,7 +187,6 @@ bool GSMSim::send(char *number, char *message)
 	_readSerial();
 	str += _buffer;
 	gsm.print(message);
-	gsm.print("\r");
 	//change delay 100 to readserial
 	//_buffer += _readSerial();
 	_readSerial();
@@ -199,7 +198,6 @@ bool GSMSim::send(char *number, char *message)
 	str += _buffer;
 	//expect CMGS:xxx   , where xxx is a number,for the sending sms.
 
-	return str;
 	/**/
 	if (str.indexOf("+CMGS:") != -1)
 	{
