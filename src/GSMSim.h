@@ -254,6 +254,9 @@ public:
   
   int getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to);
   bool deletePhoneBookEntry(int id);
+  void setLogger(bool enabled,Stream *stream);
+  bool logger;
+  Stream *logger_stream;
 };
 
 #endif

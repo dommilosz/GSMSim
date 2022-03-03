@@ -39,6 +39,15 @@
 #include "GSMSim.h"
 #include "stdint.h"
 
+#define gsm_print(x) { \
+	if(logger){ \
+		logger_stream->print("AT < "); \
+		logger_stream->print(x); \
+		logger_stream->print(";\n"); \
+	} \
+	gsm.print(x); \
+} \
+
 void GSMSim::init()
 {
 	pinMode(RESET_PIN, OUTPUT);
@@ -57,7 +66,7 @@ void GSMSim::init()
 GSMStatus GSMSim::getStatus()
 {
 	//+CIND:("battchg",(0-5)), ("signal",(0-5)), ("service",(0,1)), ("message",(0,1)),("call",(0,1)), ("roam",(0,1)), ("smsfull",(0,1))
-	gsm.print(F("AT+CIND?\r"));
+	gsm_print(F("AT+CIND?\r"));
 	_readSerial();
 	String data = _buffer;
 
@@ -106,11 +115,11 @@ void GSMSim::reset()
 	delay(1000);
 
 	// Modul kendine geldi mi onu bekle
-	gsm.print(F("AT\r"));
+	gsm_print(F("AT\r"));
 	_readSerial();
 	while (_buffer.indexOf(F("OK")) == -1)
 	{
-		gsm.print(F("AT\r"));
+		gsm_print(F("AT\r"));
 		_readSerial();
 	}
 
@@ -122,7 +131,7 @@ void GSMSim::reset()
 
 bool GSMSim::checkConnection(int retries)
 {
-	gsm.print(F("AT\r"));
+	gsm_print(F("AT\r"));
 	_readSerial();
 	if (_buffer.indexOf(F("OK")) == -1)
 	{
@@ -136,8 +145,8 @@ bool GSMSim::checkConnection(int retries)
 // send AT Command to module
 String GSMSim::sendATCommand(char *command)
 {
-	gsm.print(command);
-	gsm.print("\r");
+	gsm_print(command);
+	gsm_print("\r");
 	_readSerial(10000);
 	return _buffer;
 }
@@ -148,9 +157,9 @@ bool GSMSim::setPhoneFunc(int level = 1)
 
 	if (level == 0 || level == 1 || level == 4)
 	{
-		gsm.print(F("AT+CFUN="));
-		gsm.print(level);
-		gsm.print(F("\r"));
+		gsm_print(F("AT+CFUN="));
+		gsm_print(level);
+		gsm_print(F("\r"));
 
 		_readSerial();
 
@@ -172,7 +181,7 @@ bool GSMSim::setPhoneFunc(int level = 1)
 // SIGNAL QUALTY - 0-31 | 0-> poor | 31 - Full | 99 -> Unknown +
 unsigned int GSMSim::signalQuality()
 {
-	gsm.print(F("AT+CSQ\r"));
+	gsm_print(F("AT+CSQ\r"));
 	_readSerial(5000);
 
 	if ((_buffer.indexOf(F("+CSQ:"))) != -1)
@@ -188,7 +197,7 @@ unsigned int GSMSim::signalQuality()
 // IS Module connected to the operator? +
 bool GSMSim::isRegistered()
 {
-	gsm.print(F("AT+CREG?\r"));
+	gsm_print(F("AT+CREG?\r"));
 	_readSerial();
 
 	if ((_buffer.indexOf(F("+CREG: 0,1"))) != -1 || (_buffer.indexOf(F("+CREG: 0,5"))) != -1 || (_buffer.indexOf(F("+CREG: 1,1"))) != -1 || (_buffer.indexOf(F("+CREG: 1,5"))) != -1)
@@ -204,7 +213,7 @@ bool GSMSim::isRegistered()
 // IS SIM Inserted? +
 bool GSMSim::isSimInserted()
 {
-	gsm.print(F("AT+CSMINS?\r"));
+	gsm_print(F("AT+CSMINS?\r"));
 	_readSerial();
 	if (_buffer.indexOf(",") != -1)
 	{
@@ -230,7 +239,7 @@ bool GSMSim::isSimInserted()
 // Pin statüsü - AT+CPIN? +
 unsigned int GSMSim::pinStatus()
 {
-	gsm.print(F("AT+CPIN?\r"));
+	gsm_print(F("AT+CPIN?\r"));
 	_readSerial();
 
 	if (_buffer.indexOf(F("READY")) != -1)
@@ -270,9 +279,9 @@ unsigned int GSMSim::pinStatus()
 // Unlock the pin code +
 bool GSMSim::enterPinCode(char *pinCode)
 {
-	gsm.print(F("AT+CPIN=\""));
-	gsm.print(pinCode);
-	gsm.print(F("\"\r"));
+	gsm_print(F("AT+CPIN=\""));
+	gsm_print(pinCode);
+	gsm_print(F("\"\r"));
 	_readSerial(6000);
 
 	if (_buffer.indexOf(F("ERROR")) != -1)
@@ -287,11 +296,11 @@ bool GSMSim::enterPinCode(char *pinCode)
 
 bool GSMSim::enterPukCode(char *pukCode,char *pinCode)
 {
-	gsm.print(F("AT+CPIN=\""));
-	gsm.print(pukCode);
-	gsm.print("\",\"");
-	gsm.print(pinCode);
-	gsm.print(F("\"\r"));
+	gsm_print(F("AT+CPIN=\""));
+	gsm_print(pukCode);
+	gsm_print("\",\"");
+	gsm_print(pinCode);
+	gsm_print(F("\"\r"));
 	_readSerial(6000);
 
 	if (_buffer.indexOf(F("ERROR")) != -1)
@@ -305,11 +314,11 @@ bool GSMSim::enterPukCode(char *pukCode,char *pinCode)
 }
 
 bool GSMSim::changePinCode(char *oldCode, char *newCode){
-gsm.print(F("AT+CPWD=\"SC\",\""));
-	gsm.print(oldCode);
-	gsm.print("\",\"");
-	gsm.print(newCode);
-	gsm.print(F("\"\r"));
+gsm_print(F("AT+CPWD=\"SC\",\""));
+	gsm_print(oldCode);
+	gsm_print("\",\"");
+	gsm_print(newCode);
+	gsm_print(F("\"\r"));
 	_readSerial(6000);
 
 	if (_buffer.indexOf(F("ERROR")) != -1)
@@ -325,9 +334,9 @@ gsm.print(F("AT+CPWD=\"SC\",\""));
 // enable pin code... +
 bool GSMSim::enablePinCode(char *pinCode)
 {
-	gsm.print(F("AT+CLCK=\"SC\",1,\""));
-	gsm.print(pinCode);
-	gsm.print(F("\"\r"));
+	gsm_print(F("AT+CLCK=\"SC\",1,\""));
+	gsm_print(pinCode);
+	gsm_print(F("\"\r"));
 	_readSerial(6000);
 	if (_buffer.indexOf(F("ERROR")) != -1)
 	{
@@ -343,9 +352,9 @@ bool GSMSim::enablePinCode(char *pinCode)
 // disable pin code +
 bool GSMSim::disablePinCode(char *pinCode)
 {
-	gsm.print(F("AT+CLCK=\"SC\",0,\""));
-	gsm.print(pinCode);
-	gsm.print(F("\"\r"));
+	gsm_print(F("AT+CLCK=\"SC\",0,\""));
+	gsm_print(pinCode);
+	gsm_print(F("\"\r"));
 	_readSerial(6000);
 	if (_buffer.indexOf(F("ERROR")) != -1)
 	{
@@ -360,7 +369,7 @@ bool GSMSim::disablePinCode(char *pinCode)
 
 int GSMSim::getPinStatus()
 {
-	gsm.print(F("AT+CLCK=\"SC\",2\r"));
+	gsm_print(F("AT+CLCK=\"SC\",2\r"));
 	_readSerial(6000);
 	if (_buffer.indexOf(F("+CLCK:")) != -1)
 	{
@@ -377,7 +386,7 @@ int GSMSim::getPinStatus()
 // OPERATOR NAME +
 String GSMSim::operatorName()
 {
-	gsm.print(F("AT+COPS?\r"));
+	gsm_print(F("AT+COPS?\r"));
 	_readSerial();
 
 	if (_buffer.indexOf(F(",")) == -1)
@@ -394,7 +403,7 @@ String GSMSim::operatorName()
 String GSMSim::operatorNameFromSim()
 {
 	gsm.flush();
-	gsm.print(F("AT+CSPN?\r"));
+	gsm_print(F("AT+CSPN?\r"));
 	_readSerial();
 	//delay(250);
 	//_readSerial();
@@ -414,7 +423,7 @@ String GSMSim::operatorNameFromSim()
 // PHONE STATUS +
 unsigned int GSMSim::phoneStatus()
 {
-	gsm.print(F("AT+CPAS\r"));
+	gsm_print(F("AT+CPAS\r"));
 	_readSerial();
 
 	if ((_buffer.indexOf("+CPAS: ")) != -1)
@@ -428,11 +437,11 @@ unsigned int GSMSim::phoneStatus()
 }
 
 int GSMSim::getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to){
-	gsm.print(F("AT+CPBR="));
-	gsm.print(from);
-	gsm.print(",");
-	gsm.print(to);
-	gsm.print("\r");
+	gsm_print(F("AT+CPBR="));
+	gsm_print(from);
+	gsm_print(",");
+	gsm_print(to);
+	gsm_print("\r");
 	_readSerial();
 	
 	int count;
@@ -485,9 +494,9 @@ int GSMSim::getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to){
 
 bool GSMSim::deletePhoneBookEntry(int id){
 	//AT+CPBW=${id}
-	gsm.print(F("AT+CPBW="));
-	gsm.print(id);
-	gsm.print("\r");
+	gsm_print(F("AT+CPBW="));
+	gsm_print(id);
+	gsm_print("\r");
 	_readSerial();
 	
 	if (_buffer.indexOf(F("ERROR")) != -1)
@@ -504,7 +513,7 @@ bool GSMSim::deletePhoneBookEntry(int id){
 // ECHO OFF +
 bool GSMSim::echoOff()
 {
-	gsm.print(F("ATE0\r"));
+	gsm_print(F("ATE0\r"));
 	_readSerial();
 	if ((_buffer.indexOf(F("OK"))) != -1)
 	{
@@ -519,7 +528,7 @@ bool GSMSim::echoOff()
 // ECHO ON +
 bool GSMSim::echoOn()
 {
-	gsm.print(F("ATE1\r"));
+	gsm_print(F("ATE1\r"));
 	_readSerial();
 	if ((_buffer.indexOf(F("OK"))) != -1)
 	{
@@ -534,7 +543,7 @@ bool GSMSim::echoOn()
 // Modül Üreticisi +
 String GSMSim::moduleManufacturer()
 {
-	gsm.print(F("AT+CGMI\r"));
+	gsm_print(F("AT+CGMI\r"));
 	_readSerial();
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
 	veri.trim();
@@ -545,7 +554,7 @@ String GSMSim::moduleManufacturer()
 // Modül Modeli +
 String GSMSim::moduleModel()
 {
-	gsm.print(F("AT+CGMM\r"));
+	gsm_print(F("AT+CGMM\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
@@ -557,7 +566,7 @@ String GSMSim::moduleModel()
 // Modül Revizyonu +
 String GSMSim::moduleRevision()
 {
-	gsm.print(F("AT+CGMR\r"));
+	gsm_print(F("AT+CGMR\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(_buffer.indexOf(F(":")) + 1, _buffer.indexOf(F("OK")));
@@ -568,7 +577,7 @@ String GSMSim::moduleRevision()
 // Modülün IMEI numarası +
 String GSMSim::moduleIMEI()
 {
-	gsm.print(F("AT+CGSN\r"));
+	gsm_print(F("AT+CGSN\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
@@ -579,9 +588,9 @@ String GSMSim::moduleIMEI()
 // Modülün IMEI Numarasını değiştirir. +
 bool GSMSim::moduleIMEIChange(char *imeino)
 {
-	gsm.print(F("AT+SIMEI="));
-	gsm.print(imeino);
-	gsm.print("\r");
+	gsm_print(F("AT+SIMEI="));
+	gsm_print(imeino);
+	gsm_print("\r");
 
 	_readSerial();
 
@@ -598,7 +607,7 @@ bool GSMSim::moduleIMEIChange(char *imeino)
 // Modülün SIM Numarası +
 String GSMSim::moduleIMSI()
 {
-	gsm.print(F("AT+CIMI\r"));
+	gsm_print(F("AT+CIMI\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
@@ -609,7 +618,7 @@ String GSMSim::moduleIMSI()
 // Sim Kart Seri Numarası +
 String GSMSim::moduleICCID()
 {
-	gsm.print(F("AT+CCID\r"));
+	gsm_print(F("AT+CCID\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(8, _buffer.indexOf(F("OK")));
@@ -621,7 +630,7 @@ String GSMSim::moduleICCID()
 // Çalma Sesi +
 unsigned int GSMSim::ringerVolume()
 {
-	gsm.print(F("AT+CRSL?\r"));
+	gsm_print(F("AT+CRSL?\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(7, _buffer.indexOf(F("OK")));
@@ -638,9 +647,9 @@ bool GSMSim::setRingerVolume(unsigned int level)
 		level = 100;
 	}
 
-	gsm.print(F("AT+CRSL="));
-	gsm.print(level);
-	gsm.print(F("\r"));
+	gsm_print(F("AT+CRSL="));
+	gsm_print(level);
+	gsm_print(F("\r"));
 	_readSerial();
 
 	if (_buffer.indexOf(F("OK")) != -1)
@@ -656,7 +665,7 @@ bool GSMSim::setRingerVolume(unsigned int level)
 // Hoparlör sesi +
 unsigned int GSMSim::speakerVolume()
 {
-	gsm.print(F("AT+CLVL?\r"));
+	gsm_print(F("AT+CLVL?\r"));
 	_readSerial();
 
 	String veri = _buffer.substring(7, _buffer.indexOf(F("OK")));
@@ -673,9 +682,9 @@ bool GSMSim::setSpeakerVolume(unsigned int level)
 		level = 100;
 	}
 
-	gsm.print(F("AT+CLVL="));
-	gsm.print(level);
-	gsm.print(F("\r"));
+	gsm_print(F("AT+CLVL="));
+	gsm_print(level);
+	gsm_print(F("\r"));
 
 	_readSerial();
 
@@ -692,7 +701,7 @@ bool GSMSim::setSpeakerVolume(unsigned int level)
 // Modül Debug
 String GSMSim::moduleDebug()
 {
-	gsm.print(F("AT&V\r"));
+	gsm_print(F("AT&V\r"));
 	_readSerial(60000);
 
 	return _buffer;
@@ -700,7 +709,7 @@ String GSMSim::moduleDebug()
 // Bazı fonksiyonların modül üzerine kaydedilmesini sağlar...
 bool GSMSim::saveSettingsToModule()
 {
-	gsm.print(F("AT&W\r"));
+	gsm_print(F("AT&W\r"));
 	_readSerial();
 
 	if (_buffer.indexOf(F("OK")) != -1)
@@ -750,3 +759,9 @@ void GSMSim::_readSerial(uint32_t timeout)
 		_buffer = gsm.readString();
 	}
 }
+
+void GSMSim::setLogger(bool enabled,Stream *stream){
+	logger = enabled;
+	logger_stream = stream;
+}
+	
