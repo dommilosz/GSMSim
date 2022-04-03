@@ -443,7 +443,6 @@ int GSMSim::getPhoneBookEntries(void (*cb)(PhoneBookEntry pe),int from, int to){
 	gsm_print(to);
 	gsm_print("\r");
 	_readSerial();
-	
 	int count;
 
 	if (_buffer.indexOf("ERROR") != -1)
@@ -710,6 +709,23 @@ String GSMSim::moduleDebug()
 bool GSMSim::saveSettingsToModule()
 {
 	gsm_print(F("AT&W\r"));
+	_readSerial();
+
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool GSMSim::setBaudrate(int rate)
+{
+	gsm_print(F("AT+IPR="));
+	gsm_print(rate);
+	gsm_print(F("\r"));
 	_readSerial();
 
 	if (_buffer.indexOf(F("OK")) != -1)

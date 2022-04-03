@@ -191,6 +191,7 @@ public:
   String moduleDebug();
   // Ayarları cihaz üzerine kaydeder.
   bool saveSettingsToModule();
+  bool setBaudrate(int rate);
 
   // SMS Fonksiyonları
   bool initSMS();
