@@ -781,3 +781,18 @@ void GSMSim::setLogger(bool enabled,Stream *stream){
 	logger_stream = stream;
 }
 	
+bool GSMSim::setAudioChannel(int channel){
+	gsm_print(F("AT+QAUDCH="));
+	gsm_print(channel);
+	gsm_print(F("\r"));
+	_readSerial();
+
+	if (_buffer.indexOf(F("OK")) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}

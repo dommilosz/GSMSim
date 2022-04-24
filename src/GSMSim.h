@@ -258,6 +258,8 @@ public:
   void setLogger(bool enabled,Stream *stream);
   bool logger;
   Stream *logger_stream;
+  
+  bool setAudioChannel(int channel);
 };
 
 #endif
